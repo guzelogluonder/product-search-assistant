@@ -3,6 +3,7 @@ package com.onder.productsearchassistant.controller;
 import com.onder.productsearchassistant.model.request.SearchRequest;
 import com.onder.productsearchassistant.model.response.SearchResponse;
 import com.onder.productsearchassistant.service.SearchService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +19,7 @@ public class SearchController {
     private final SearchService searchService;
 
     @PostMapping("/search")
-    public ResponseEntity<SearchResponse> search(@RequestBody SearchRequest request){
+    public ResponseEntity<SearchResponse> search(@Valid @RequestBody SearchRequest request){
         return ResponseEntity.ok(searchService.search(request));
     }
 }
