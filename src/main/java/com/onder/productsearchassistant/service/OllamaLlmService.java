@@ -1,6 +1,8 @@
 package com.onder.productsearchassistant.service;
 
+import com.onder.productsearchassistant.exception.ServiceUnavailableException;
 import com.onder.productsearchassistant.model.response.SearchResponse;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class OllamaLlmService implements LlmService{
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @CircuitBreaker(name = "llm", fallbackMethod = "fallback")
     @Override
     public SearchResponse parse(String query) {
         try{
@@ -52,6 +55,10 @@ public class OllamaLlmService implements LlmService{
         }catch (Exception e){
             throw new RuntimeException("Ollama request failed: " + e.getMessage());
         }
+    }
+
+    public SearchResponse fallback(String query, Throwable t) {
+        throw new ServiceUnavailableException("LLM service is temporarily unavailable");
     }
 
     private String builPrompt(String query){
