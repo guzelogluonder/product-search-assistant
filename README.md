@@ -46,6 +46,61 @@ ollama serve
 mvn spring-boot:run
 ```
 
+## Running with Docker
+
+The project ships with a multi-stage `Dockerfile` and a `docker-compose.yml` that runs the API
+alongside a local Ollama instance, wired together over a container network.
+
+**Prerequisites:** Docker Desktop (or Docker Engine) with Compose v2.
+
+### 1. Start the stack
+
+```bash
+docker compose up -d --build
+```
+
+This builds the app image, starts Ollama, and — thanks to
+`depends_on: condition: service_healthy` — only starts the app once Ollama's healthcheck passes.
+
+### 2. Pull the model (first run only)
+
+```bash
+docker exec -it product-search-assistant-ollama-1 ollama pull llama3.2
+```
+
+The model is cached in the `ollama-data` named volume, so this step isn't needed again unless the
+volume is removed.
+
+### 3. Verify
+
+```bash
+curl http://localhost:8080/api/v1/health
+
+curl -X POST http://localhost:8080/api/v1/search \
+  -H "Authorization: Bearer my-secret-token-123" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "red dress under 500 TL"}'
+```
+
+### Configuration via environment variables
+
+| Variable | Overrides | Default |
+|---|---|---|
+| `OLLAMA_BASE_URL` | `ollama.base-url` | `http://localhost:11434` |
+| `OLLAMA_MODEL` | `ollama.model` | `llama3.2` |
+| `APP_SECURITY_TOKEN` | `app.security.token` | `my-secret-token-123` |
+
+Inside `docker-compose.yml`, the app reaches Ollama at `http://ollama:11434` — the compose service
+name, not `localhost`, since `localhost` inside a container refers to the container itself. Put
+`APP_SECURITY_TOKEN` in a git-ignored `.env` file rather than committing a real token.
+
+### Stopping
+
+```bash
+docker compose down       # stop containers, keep the pulled model
+docker compose down -v    # also remove the ollama-data volume
+```
+
 ## Endpoints
 
 | Method | URL | Auth | Description |
