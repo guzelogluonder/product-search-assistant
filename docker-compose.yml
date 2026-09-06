@@ -1,0 +1,34 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      OLLAMA_BASE_URL: http://ollama:11434
+      APP_SECURITY_TOKEN: ${APP_SECURITY_TOKEN}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - psa-net
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - psa-net
+
+volumes:
+  ollama-data:
+
+networks:
+  psa-net:
